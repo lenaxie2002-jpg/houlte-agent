@@ -221,6 +221,14 @@ def feishu_proxy():
         return json_response({"error": str(exc)}, 500)
 
 
+@app.route("/api/action-test", methods=["POST"])
+def action_test():
+    data = request.get_json(force=True) or {}
+    return {
+        "ok": True,
+        "message": "Houlte Agent Action is working",
+        "received": data
+    }
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))
     app.run(host="0.0.0.0", port=port)
