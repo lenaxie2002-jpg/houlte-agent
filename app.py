@@ -297,41 +297,6 @@ def generate_plan():
     })
 
 
-@app.route("/api/generate-email", methods=["POST"])
-def generate_email():
-    data = request.get_json(silent=True) or {}
-
-    campaign = data.get("campaign", "")
-    audience = data.get("audience", "")
-    tone = data.get("tone", "sophisticated, warm, editorial")
-    product_category = data.get("product_category", "")
-    offer = data.get("offer", "")
-    landing_url = data.get("landing_url", "")
-
-    subject = f"{campaign} | Houlte"
-    preview = f"A design-led edit curated for {audience or 'your home'}."
-
-    body = f"""
-A beautiful home is built through thoughtful layers.
-
-For this {campaign}, Houlte brings together {product_category or 'furniture and lighting'} pieces with a refined, editorial point of view. Each selection is designed to feel warm, elevated, and quietly timeless.
-
-{offer if offer else ''}
-
-Explore the edit and discover pieces made to bring depth, texture, and atmosphere into the room.
-
-CTA: Shop the Edit
-Landing Page: {landing_url or 'https://www.houlte.com'}
-"""
-
-    return json_response({
-        "ok": True,
-        "subject": subject,
-        "preview": preview,
-        "body": body.strip(),
-        "tone": tone
-    })
-
 @app.route("/api/generate-poster-html", methods=["POST"])
 def generate_poster_html():
     data = request.get_json(silent=True) or {}
