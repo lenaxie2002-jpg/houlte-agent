@@ -233,6 +233,39 @@ def action_test():
         "message": "Houlte Agent Action is working",
         "received": data
     })
+    
+
+@app.route("/api/generate-email", methods=["POST"])
+def generate_email():
+    data = request.get_json(silent=True) or {}
+
+    campaign = data.get("campaign", "")
+    audience = data.get("audience", "")
+    tone = data.get("tone", "friendly")
+
+    email_subject = f"{campaign} | Houlte"
+
+    email_body = f"""
+Hi {audience},
+
+We're excited to share our latest {campaign} collection with you.
+
+Crafted with elegance and timeless detail, this campaign reflects the spirit of Houlte.
+
+Explore the collection today.
+
+Best,
+Houlte Team
+"""
+
+    return json_response({
+        "ok": True,
+        "subject": email_subject,
+        "body": email_body,
+        "tone": tone
+    })
+
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))
     app.run(host="0.0.0.0", port=port)
