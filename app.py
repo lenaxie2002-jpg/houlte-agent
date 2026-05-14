@@ -266,6 +266,112 @@ Houlte Team
     })
 
 
+@app.route("/api/generate-plan", methods=["POST"])
+def generate_plan():
+    data = request.get_json(silent=True) or {}
+
+    month = data.get("month", "")
+    email_count = data.get("email_count", 12)
+    events = data.get("events", "")
+    categories = data.get("categories", [])
+    audience = data.get("audience", "全体客户")
+
+    plan = []
+    for i in range(1, int(email_count) + 1):
+        category = categories[(i - 1) % len(categories)] if categories else "Lighting"
+        plan.append({
+            "email_number": i,
+            "suggested_date": f"{month} - Week {((i - 1) // 3) + 1}",
+            "theme": f"{category} Editorial Campaign",
+            "type": "Editorial / Product Showcase",
+            "audience": audience,
+            "angle": f"Design-led story around {category}",
+            "cta": "Shop the Edit"
+        })
+
+    return json_response({
+        "ok": True,
+        "month": month,
+        "events": events,
+        "plan": plan
+    })
+
+
+@app.route("/api/generate-email", methods=["POST"])
+def generate_email():
+    data = request.get_json(silent=True) or {}
+
+    campaign = data.get("campaign", "")
+    audience = data.get("audience", "")
+    tone = data.get("tone", "sophisticated, warm, editorial")
+    product_category = data.get("product_category", "")
+    offer = data.get("offer", "")
+    landing_url = data.get("landing_url", "")
+
+    subject = f"{campaign} | Houlte"
+    preview = f"A design-led edit curated for {audience or 'your home'}."
+
+    body = f"""
+A beautiful home is built through thoughtful layers.
+
+For this {campaign}, Houlte brings together {product_category or 'furniture and lighting'} pieces with a refined, editorial point of view. Each selection is designed to feel warm, elevated, and quietly timeless.
+
+{offer if offer else ''}
+
+Explore the edit and discover pieces made to bring depth, texture, and atmosphere into the room.
+
+CTA: Shop the Edit
+Landing Page: {landing_url or 'https://www.houlte.com'}
+"""
+
+    return json_response({
+        "ok": True,
+        "subject": subject,
+        "preview": preview,
+        "body": body.strip(),
+        "tone": tone
+    })
+
+
+@app.route("/api/generate-poster-brief", methods=["POST"])
+def generate_poster_brief():
+    data = request.get_json(silent=True) or {}
+
+    headline = data.get("headline", "")
+    subtitle = data.get("subtitle", "")
+    product_category = data.get("product_category", "")
+    mood = data.get("mood", "Warm cream + walnut")
+    layout = data.get("layout", "Premium editorial poster")
+    cta = data.get("cta", "Shop the Edit")
+
+    brief = {
+        "headline": headline,
+        "subtitle": subtitle,
+        "format": "Email hero poster, vertical 1080x1920",
+        "layout": layout,
+        "visual_direction": f"Premium Houlte editorial look for {product_category or 'home furnishings'}",
+        "color_palette": mood,
+        "composition": [
+            "Use one strong hero product or room-inspired composition",
+            "Keep typography minimal and elevated",
+            "Use generous negative space",
+            "Avoid cheap sale-badge styling unless explicitly promotional",
+            "Use Houlte dark espresso brand color for text or CTA"
+        ],
+        "copy": {
+            "headline": headline,
+            "subtitle": subtitle,
+            "cta": cta
+        },
+        "mailchimp_note": "Use this poster as the main hero image or HTML hero block at the top of the campaign."
+    }
+
+    return json_response({
+        "ok": True,
+        "poster_brief": brief
+    })
+
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))
     app.run(host="0.0.0.0", port=port)
