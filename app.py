@@ -332,45 +332,112 @@ Landing Page: {landing_url or 'https://www.houlte.com'}
         "tone": tone
     })
 
-
-@app.route("/api/generate-poster-brief", methods=["POST"])
-def generate_poster_brief():
+@app.route("/api/generate-poster-html", methods=["POST"])
+def generate_poster_html():
     data = request.get_json(silent=True) or {}
 
     headline = data.get("headline", "")
     subtitle = data.get("subtitle", "")
-    product_category = data.get("product_category", "")
+    layout = data.get("layout", "Premium Mixed Variants")
     mood = data.get("mood", "Warm cream + walnut")
-    layout = data.get("layout", "Premium editorial poster")
-    cta = data.get("cta", "Shop the Edit")
+    cta = data.get("cta", "SHOP THE EDIT")
+    landing_url = data.get("landing_url", "https://www.houlte.com")
+    products = data.get("products", [])
 
-    brief = {
-        "headline": headline,
-        "subtitle": subtitle,
-        "format": "Email hero poster, vertical 1080x1920",
-        "layout": layout,
-        "visual_direction": f"Premium Houlte editorial look for {product_category or 'home furnishings'}",
-        "color_palette": mood,
-        "composition": [
-            "Use one strong hero product or room-inspired composition",
-            "Keep typography minimal and elevated",
-            "Use generous negative space",
-            "Avoid cheap sale-badge styling unless explicitly promotional",
-            "Use Houlte dark espresso brand color for text or CTA"
-        ],
-        "copy": {
-            "headline": headline,
-            "subtitle": subtitle,
-            "cta": cta
-        },
-        "mailchimp_note": "Use this poster as the main hero image or HTML hero block at the top of the campaign."
+    if not headline:
+        return json_response({"ok": False, "error": "Missing headline"}, 400)
+
+    ml = mood.lower()
+    pal = {
+        "bg": "#FAF7F2",
+        "card": "#EDE5D8",
+        "text": "#2c1c17",
+        "muted": "rgba(44,28,23,0.68)",
+        "accent": "#b8894a",
+        "cta": "#2c1c17",
+        "cta_text": "#FAF7F2"
     }
+
+    if "dark" in ml or "espresso" in ml:
+        pal = {
+            "bg": "#120803",
+            "card": "#2c1c17",
+            "text": "#FAF7F2",
+            "muted": "rgba(250,247,242,0.72)",
+            "accent": "#d4a96a",
+            "cta": "#d4a96a",
+            "cta_text": "#120803"
+        }
+    elif "sage" in ml or "green" in ml:
+        pal = {
+            "bg": "#EEF1EA",
+            "card": "#DAE5D0",
+            "text": "#1a2c14",
+            "muted": "rgba(26,44,20,0.72)",
+            "accent": "#5a7c44",
+            "cta": "#3a5c2e",
+            "cta_text": "#EEF1EA"
+        }
+
+    def product_img(index):
+        if len(products) > index:
+            return products[index].get("image", "")
+        return ""
+
+    img1 = product_img(0)
+    img2 = product_img(1)
+    img3 = product_img(2)
+
+    if "Full-Bleed" in layout:
+        poster_html = f"""
+<table width="100%" cellpadding="0" cellspacing="0" style="background:{pal['bg']};max-width:660px;margin:0 auto;">
+  <tr>
+    <td style="padding:0;">
+      <div style="background:url('{img1}') center/cover no-repeat;min-height:720px;position:relative;">
+        <div style="background:rgba(0,0,0,.38);min-height:720px;padding:64px 42px;box-sizing:border-box;">
+          <div style="font-family:DM Sans,Arial,sans-serif;color:#fff;font-size:12px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:24px;">HOULTE</div>
+          <div style="font-family:Georgia,serif;color:#fff;font-size:54px;line-height:1.05;margin-bottom:20px;">{headline}</div>
+          <div style="font-family:DM Sans,Arial,sans-serif;color:rgba(255,255,255,.86);font-size:18px;line-height:1.55;max-width:460px;">{subtitle}</div>
+          <a href="{landing_url}" style="display:inline-block;margin-top:34px;background:#fff;color:#2c1c17;text-decoration:none;padding:15px 26px;border-radius:999px;font-family:DM Sans,Arial,sans-serif;font-size:13px;letter-spacing:.12em;">{cta}</a>
+        </div>
+      </div>
+    </td>
+  </tr>
+</table>
+"""
+    else:
+        poster_html = f"""
+<table width="100%" cellpadding="0" cellspacing="0" style="background:{pal['bg']};max-width:660px;margin:0 auto;">
+  <tr>
+    <td style="padding:46px 34px;text-align:center;">
+      <div style="font-family:DM Sans,Arial,sans-serif;color:{pal['accent']};font-size:12px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:18px;">HOULTE EDIT</div>
+      <div style="font-family:Georgia,serif;color:{pal['text']};font-size:48px;line-height:1.08;margin-bottom:16px;">{headline}</div>
+      <div style="font-family:DM Sans,Arial,sans-serif;color:{pal['muted']};font-size:16px;line-height:1.6;margin:0 auto 30px;max-width:500px;">{subtitle}</div>
+
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="58%" style="padding:6px;">
+            <img src="{img1}" style="width:100%;height:auto;border-radius:20px;display:block;">
+          </td>
+          <td width="42%" style="padding:6px;">
+            <img src="{img2}" style="width:100%;height:auto;border-radius:20px;display:block;margin-bottom:12px;">
+            <img src="{img3}" style="width:100%;height:auto;border-radius:20px;display:block;">
+          </td>
+        </tr>
+      </table>
+
+      <a href="{landing_url}" style="display:inline-block;margin-top:32px;background:{pal['cta']};color:{pal['cta_text']};text-decoration:none;padding:15px 28px;border-radius:999px;font-family:DM Sans,Arial,sans-serif;font-size:13px;letter-spacing:.12em;">{cta}</a>
+    </td>
+  </tr>
+</table>
+"""
 
     return json_response({
         "ok": True,
-        "poster_brief": brief
+        "layout": layout,
+        "mood": mood,
+        "poster_html": poster_html.strip()
     })
-
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))
