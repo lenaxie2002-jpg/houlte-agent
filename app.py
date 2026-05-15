@@ -24,7 +24,7 @@ MAILCHIMP_AUDIENCE_ID = os.getenv("MAILCHIMP_AUDIENCE_ID", "4b72a551fe")
 FEISHU_WEBHOOK = os.getenv("FEISHU_WEBHOOK", "")
 APP_ORIGIN = os.getenv("APP_ORIGIN", "https://houlte.com")
 APP_TITLE = os.getenv("APP_TITLE", "Houlte Email Agent")
-
+AGENT_ACCESS_PASSWORD = os.getenv("AGENT_ACCESS_PASSWORD", "")
 app = Flask(__name__)
 CORS(app)
 
@@ -171,9 +171,91 @@ def generate_houlte_poster_html(data):
     return poster.strip(), chosen
 
 
-@app.get("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
-    return send_file(STATIC_HTML)
+    if not AGENT_ACCESS_PASSWORD:
+        return send_file(STATIC_HTML)
+
+    if request.cookies.get("houlte_agent_auth") == "ok":
+        return send_file(STATIC_HTML)
+
+    error = ""
+
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        if password == AGENT_ACCESS_PASSWORD:
+            resp = Response("", status=302)
+            resp.headers["Location"] = "/"
+            resp.set_cookie(
+                "houlte_agent_auth",
+                "ok",
+                max_age=60 * 60 * 8,
+                httponly=True,
+                samesite="Lax",
+            )
+            return resp
+        error = "Password incorrect"
+
+    return f"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Houlte Agent Login</title>
+  <style>
+    body {{
+      font-family: Arial, sans-serif;
+      background: #faf7f2;
+      color: #2c1c17;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }}
+    .box {{
+      background: white;
+      border: 1px solid #e0d5c8;
+      border-radius: 14px;
+      padding: 34px;
+      width: 360px;
+      text-align: center;
+    }}
+    input {{
+      width: 100%;
+      padding: 12px;
+      margin: 16px 0;
+      border: 1px solid #cfc2b0;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }}
+    button {{
+      width: 100%;
+      padding: 12px;
+      background: #2c1c17;
+      color: #faf7f2;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+    }}
+    .err {{
+      color: #8b2020;
+      font-size: 13px;
+      margin-top: 10px;
+    }}
+  </style>
+</head>
+<body>
+  <form class="box" method="POST">
+    <h2>HOULTE</h2>
+    <p>Enter password to access the Mailchimp Agent</p>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit">Enter</button>
+    <div class="err">{error}</div>
+  </form>
+</body>
+</html>
+"""
 
 
 @app.get("/health")
